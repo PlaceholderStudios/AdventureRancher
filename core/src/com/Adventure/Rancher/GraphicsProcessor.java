@@ -31,7 +31,7 @@ public class GraphicsProcessor
 
     private SpriteBatch spriteBatch;
 
-    private final int tileSize = 32;
+    private final int tileSize = 128;
 
     private boolean hasRendered = false;
 
@@ -44,16 +44,30 @@ public class GraphicsProcessor
 
         assetManager.setLoader(Text.class, new TextAsset(new InternalFileHandleResolver()));
 
-        assetManager.load("grass.png", Texture.class);
-        assetManager.load("water.png", Texture.class);
+//        assetManager.load("grass.png", Texture.class);
+//        assetManager.load("water.png", Texture.class);
+        assetManager.load(new AssetDescriptor<Text>("texturemap.txt", Text.class, new TextAsset.TextParameter()));
         assetManager.load(new AssetDescriptor<Text>(mapName + ".txt", Text.class, new TextAsset.TextParameter()));
 
         boolean loadingDone = assetManager.update();
         while(!loadingDone)
             loadingDone = assetManager.update();
 
-        textureList.add(assetManager.get("grass.png", Texture.class));
-        textureList.add(assetManager.get("water.png", Texture.class));
+        String loadingFile = assetManager.get("texturemap.txt", Text.class).getString();
+        String[] loadTokens = loadingFile.split("[\r\n]");
+
+        for(String token : loadTokens){
+            if (!token.isEmpty())
+                assetManager.load(token+".png", Texture.class);
+        }
+
+        loadingDone = false;
+        while(!loadingDone)
+            loadingDone = assetManager.update();
+
+        for(String token : loadTokens)
+            if(!token.isEmpty())
+                textureList.add(assetManager.get(token + ".png", Texture.class));
 
         mapLayout = new ArrayList<Byte>();
 
@@ -84,7 +98,7 @@ public class GraphicsProcessor
             }
 
             byte tileVal = mapLayout.get(i);
-            spriteBatch.draw(textureList.get(tileVal), mapX, mapY);
+            spriteBatch.draw(textureList.get(tileVal), mapX, mapY, tileSize, tileSize);
 
             mapX = mapX + tileSize;
         }
